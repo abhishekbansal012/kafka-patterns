@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: 08-transactional-outbox
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ipce
+    username: ipce
+    password: ipce
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: outbox
+    show-sql: false
+
+server:
+  port: 8098
+
+# Outbox polling interval
+outbox:
+  poll-interval-ms: 2000
+  batch-size: 50

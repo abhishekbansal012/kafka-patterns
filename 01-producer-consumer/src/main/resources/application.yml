@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: 01-producer-consumer
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+    consumer:
+      group-id: producer-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.scaleatdesign.*
+
+server:
+  port: 8091
+
+# Topic configuration
+kafka:
+  topics:
+    orders:
+      name: orders
+      partitions: 3
+      replicas: 1
+    order-confirmations:
+      name: order-confirmations
+      partitions: 3
+      replicas: 1

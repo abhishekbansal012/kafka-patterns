@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: 02-avro-schema-registry
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        auto.register.schemas: true
+        value.subject.name.strategy: io.confluent.kafka.serializers.subject.TopicNameStrategy
+    consumer:
+      group-id: avro-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        specific.avro.reader: true
+        value.subject.name.strategy: io.confluent.kafka.serializers.subject.TopicNameStrategy
+
+server:
+  port: 8092

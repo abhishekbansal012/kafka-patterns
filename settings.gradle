@@ -1,0 +1,28 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://repo.spring.io/snapshot' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'kafka-patterns'
+
+// Common module
+include 'common'
+
+// Pattern modules
+include '01-producer-consumer'
+include '02-avro-schema-registry'
+include '03-partitioning-strategies'
+include '04-consumer-groups'
+include '05-retry-pattern'
+include '06-dead-letter-topic'
+include '07-idempotent-consumer'
+include '08-transactional-outbox'
+include '09-saga-pattern'
+include '10-event-sourcing'
+include '11-cqrs'
+include '12-exactly-once-processing'
+include '13-payment-processing-demo'
+include '14-banking-reference-architecture'
