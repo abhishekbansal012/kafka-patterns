@@ -117,6 +117,70 @@ A multi-region Kafka cluster is a setup where brokers are deployed across multip
 
 3. **Follower fetching** — Kafka 2.4+ introduced `replica.selector.class` which allows consumers to read from the closest replica (not just the leader). An EU consumer can read from an EU follower without cross-region traffic.
 
+#### Glossary: Key Multi-Region Concepts
+
+**MirrorMaker (MirrorMaker 2)**
+
+A Kafka tool that replicates data between two separate Kafka clusters. It's essentially a consumer on Cluster A + a producer on Cluster B, running continuously.
+
+- Cluster A (EU) has orders from EU customers
+- MirrorMaker reads those messages and writes them to Cluster B (US) — or selectively doesn't, keeping EU data in EU
+- MM2 (version 2) supports topic filtering, offset translation, and automatic consumer group sync
+- Think of it as a bridge between independent Kafka clusters
+
+Real-world use: You have a Kafka cluster in Frankfurt and one in Virginia. MirrorMaker replicates only the topics/partitions each region needs. Region-based partitioning makes this filtering trivial — replicate partitions 0-1 (US) to the US cluster, keep partition 2 (EU) only in the EU cluster.
+
+**Broker Rack Awareness**
+
+A Kafka broker config (`broker.rack`) that tells Kafka which physical location (rack, availability zone, or region) a broker lives in.
+
+```properties
+# broker config on an EU broker
+broker.rack=eu-west-1
+
+# broker config on a US broker
+broker.rack=us-east-1
+```
+
+Without this, Kafka has no idea that Broker 1 and Broker 2 are in the same data center — it might put all replicas in one rack, defeating the purpose of replication for fault tolerance. With it, Kafka intelligently distributes replicas across locations.
+
+**Replica Placement**
+
+How Kafka decides which brokers hold the leader and follower copies of a partition.
+
+- Every partition has 1 leader (handles reads/writes) and N-1 followers (replicas for durability)
+- With rack awareness enabled, Kafka spreads replicas across different racks/regions
+- Example with `replication-factor=3` and rack awareness:
+
+```
+Partition 2 (EU data):
+  Leader   → Broker in eu-west-1     (primary reads/writes)
+  Replica 1 → Broker in us-east-1    (failover + cross-region availability)
+  Replica 2 → Broker in ap-south-1   (failover)
+```
+
+This guarantees that if an entire region goes down, the partition still has a live replica elsewhere to promote to leader.
+
+**Follower Fetching (KIP-392, Kafka 2.4+)**
+
+By default, consumers can only read from the **partition leader** — even if a follower replica is sitting right next to them in the same data center.
+
+Follower fetching changes this: consumers read from the **nearest replica** instead of always going to the leader.
+
+```
+Without follower fetching:
+  EU Consumer → reads from US-EAST (leader) → cross-region latency (~100ms+)
+
+With follower fetching:
+  EU Consumer → reads from EU (local follower) → local latency (~1-5ms)
+```
+
+Configured via:
+- Broker side: `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector`
+- Consumer side: `client.rack=eu-west-1` (tells Kafka where the consumer is)
+
+Kafka matches the consumer's rack to the closest replica and serves reads from there. The follower might be slightly behind the leader (async replication lag), so you trade milliseconds of staleness for significantly lower read latency.
+
 **Three common multi-region patterns:**
 
 ```

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class ManualAckConsumer {
 
     @KafkaListener(
+            id = "order-group-consumer",
             topics = KafkaTopics.ORDERS_GROUPED,
             groupId = "order-processing-group",
             containerFactory = "manualAckFactory"

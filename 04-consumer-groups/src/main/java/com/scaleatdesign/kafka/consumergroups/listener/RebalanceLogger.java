@@ -38,6 +38,11 @@ public class RebalanceLogger implements ConsumerRebalanceListener {
         }
     }
 
+    /**
+     * Formats a collection of TopicPartition objects into a readable log string.
+     * Example: {TopicPartition(orders-grouped, 0), TopicPartition(orders-grouped, 2)}
+     *        → "[orders-grouped-0, orders-grouped-2]"
+     */
     private String formatPartitions(Collection<TopicPartition> partitions) {
         return partitions.stream()
                 .map(tp -> tp.topic() + "-" + tp.partition())
