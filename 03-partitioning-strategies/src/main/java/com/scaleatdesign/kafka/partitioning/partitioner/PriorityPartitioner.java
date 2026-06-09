@@ -52,8 +52,12 @@ public class PriorityPartitioner implements Partitioner {
     }
 
     @Override
-    public void close() {}
+    public void close() {
+
+    }
 
     @Override
-    public void configure(Map<String, ?> configs) {}
+    public void configure(Map<String, ?> configs) {
+
+    }
 }

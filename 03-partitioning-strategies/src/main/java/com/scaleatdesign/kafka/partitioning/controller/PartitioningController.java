@@ -22,6 +22,9 @@ public class PartitioningController {
     @Qualifier("regionPartitionedTemplate")
     private final KafkaTemplate<String, OrderEvent> regionTemplate;
 
+    @Qualifier("priorityPartitionedTemplate")
+    private final KafkaTemplate<String, OrderEvent> priorityTemplate;
+
     private final KafkaTemplate<String, OrderEvent> defaultTemplate;
 
     /**
@@ -51,6 +54,36 @@ public class PartitioningController {
                 "strategy", "REGION_BASED",
                 "messages", sent,
                 "note", "Check logs to see partition assignments per region"
+        ));
+    }
+
+    /**
+     * Send messages using priority-based partitioning.
+     * HIGH → partition 0, MEDIUM → partitions 1-2, LOW → partitions 3+.
+     */
+    @PostMapping("/priority")
+    public ResponseEntity<Map<String, Object>> sendByPriority() {
+        List<String> priorities = List.of("HIGH", "MEDIUM", "LOW");
+        List<Map<String, String>> sent = new ArrayList<>();
+
+        for (String priority : priorities) {
+            OrderEvent event = buildSampleOrder();
+            String key = priority + "-" + event.getOrderId();
+
+            priorityTemplate.send(KafkaTopics.ORDERS_PARTITIONED, key, event)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Priority {} → partition {}", priority, result.getRecordMetadata().partition());
+                        }
+                    });
+
+            sent.add(Map.of("priority", priority, "key", key, "orderId", event.getOrderId()));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "strategy", "PRIORITY_BASED",
+                "messages", sent,
+                "note", "HIGH→partition 0, MEDIUM→partitions 1-2, LOW→partitions 3+"
         ));
     }
 

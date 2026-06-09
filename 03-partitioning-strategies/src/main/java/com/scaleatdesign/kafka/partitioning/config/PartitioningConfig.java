@@ -2,6 +2,7 @@ package com.scaleatdesign.kafka.partitioning.config;
 
 import com.scaleatdesign.kafka.common.config.KafkaTopics;
 import com.scaleatdesign.kafka.common.event.OrderEvent;
+import com.scaleatdesign.kafka.partitioning.partitioner.PriorityPartitioner;
 import com.scaleatdesign.kafka.partitioning.partitioner.RegionBasedPartitioner;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -25,6 +26,21 @@ public class PartitioningConfig {
                 .partitions(6) // More partitions to demonstrate routing
                 .replicas(1)
                 .build();
+    }
+
+    /**
+     * Custom KafkaTemplate that uses PriorityPartitioner.
+     */
+    @Bean("priorityPartitionedTemplate")
+    public KafkaTemplate<String, OrderEvent> priorityPartitionedTemplate() {
+        Map<String, Object> props = Map.of(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092",
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class,
+                ProducerConfig.PARTITIONER_CLASS_CONFIG, PriorityPartitioner.class
+        );
+        ProducerFactory<String, OrderEvent> factory = new DefaultKafkaProducerFactory<>(props);
+        return new KafkaTemplate<>(factory);
     }
 
     /**
